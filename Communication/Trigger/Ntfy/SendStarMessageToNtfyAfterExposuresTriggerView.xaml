@@ -1,0 +1,74 @@
+﻿<!--
+Copyright © 2024 Sascha Lohaus (sascha.lohaus@gmail.com)
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<ResourceDictionary
+                          x:Class="NINA.StarMessenger.Communication.Trigger.Ntfy.SendStarMessageToNtfyAfterExposuresTriggerView"
+                          xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                          xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                          xmlns:nina="clr-namespace:NINA.View.Sequencer;assembly=NINA.Sequencer"
+                          xmlns:ntfy="clr-namespace:NINA.StarMessenger.Communication.Trigger.Ntfy">
+
+    <DataTemplate DataType="{x:Type ntfy:SendStarMessageToNtfyAfterExposuresTrigger}">
+        <nina:SequenceBlockView>
+            <nina:SequenceBlockView.SequenceItemContent>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" Text="After exposures" />
+                        <TextBox MinWidth="40"
+                                 Margin="5,3,5,3"
+                                 MaxLines="1"
+                                 TextWrapping="NoWrap"
+                                 TextAlignment="Left">
+                            <TextBox.Text>
+                                <Binding Path="AfterExposures" UpdateSourceTrigger="PropertyChanged"/>
+                            </TextBox.Text>
+                        </TextBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <TextBlock  Margin="5,3,0,3" VerticalAlignment="Center" Text="Priority" />
+                        <ComboBox
+                            Width="100"
+                            Margin="5,3,0,3"
+                            VerticalAlignment="Center"
+                            HorizontalAlignment="Left"
+                            HorizontalContentAlignment="Left"
+                            ItemsSource="{Binding PriorityTypes}"
+                            SelectedItem="{Binding Priority, Mode=TwoWay}">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock  Margin="5,3,5,3" VerticalAlignment="Center" Text="Exposures" />
+                        <TextBlock
+                            Margin="0,0,0,0"
+                            VerticalAlignment="Center"
+                            Text="{Binding ProgressExposures}" />
+                        <TextBlock  Margin="0,5,0,0" Text="/" />
+                        <TextBlock Margin="0,0,0,0" VerticalAlignment="Center" Text="{Binding AfterExposures}" />
+                    </StackPanel>
+                </Grid>
+            </nina:SequenceBlockView.SequenceItemContent>
+        </nina:SequenceBlockView>
+    </DataTemplate>
+
+
+    <GeometryGroup x:Key="StarMessageNtfyIcon">
+        <PathGeometry Figures="m 97.3934 49.2389 v 15.0368 l -4.6228 5.3848 h -32.0548 l -4.572 -5.2324 h 28.6004 l 1.8796 -2.1844 v -7.7724 H 57.5154 v -14.732 l 4.826 -5.6388 h 36.2712 l -4.4704 5.2324 h -23.7236 l -2.286 2.5908 v 7.3152 z m 44.2976 -15.1384 v 35.56 l -29.1084 -19.3548 v 19.3548 h -10.6172 V 34.1005 l 29.2608 19.2024 v -19.2024 z" FillRule="Nonzero"/>
+    </GeometryGroup>
+
+</ResourceDictionary>

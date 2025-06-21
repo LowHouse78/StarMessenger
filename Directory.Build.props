@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows7.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <SolutionDir>$(MSBuildThisFileDirectory)</SolutionDir>
+    <OutputPath>$(SolutionDir)\Build</OutputPath>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <OutputPath>../../../AppData/Local/NINA/Plugins/3.0.0/StarMessenger</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <OutputPath>../../../AppData/Local/NINA/Plugins/3.0.0/StarMessenger</OutputPath>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <Compile Include="$(SolutionDir)\AssemblyInfo.cs"
+             Link="Properties\AssemblyInfo.cs"
+             Condition="$(MSBuildProjectName) != 'DependencyValidation' "/>
+  </ItemGroup>
+
+</Project>
