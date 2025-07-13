@@ -12,6 +12,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using NINA.Core.Utility;
@@ -28,10 +29,14 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
     private string _selectedOperatorForCondition;
     private PropertyItem? _selectedPropertyForCondition;
     private string? _valueForCondition;
+    private string? _aimedConsecutiveCount;
+    private int _currentConsecutiveCount;
+    private ConsecutiveCountStatusLevelType _consecutiveCountStatusLevel;
     private ObservableCollection<string>? _operatorsForCondition;
     private ObservableCollection<PropertyItem> _propertiesForCondition;
     private readonly Dictionary<Type, IList<string>> _issuesPerType = new Dictionary<Type, IList<string>>();
 
+   
     public Condition()
     {
         InitializeCondition();
@@ -42,6 +47,8 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
         Settings.Default.PropertyChanged += SettingsChanged;
         _operatorsForCondition = new ObservableCollection<string>(_numberOperators);
         _propertiesForCondition = new ObservableCollection<PropertyItem>();
+        _currentConsecutiveCount = 0;
+        AimedConsecutiveCount =  "1";
 
         foreach (var property in DataProvider.GetProperties().OrderBy(item => item.PropertyUserFriendlyName))
         {
@@ -59,12 +66,24 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
         }
     }
 
+    public ConsecutiveCountStatusLevelType ConsecutiveCountStatusLevel
+    {
+        get => _consecutiveCountStatusLevel;
+        set
+        {
+            _consecutiveCountStatusLevel = value;
+            RaisePropertyChanged();
+        }
+    }
+
     public string SelectedOperatorForCondition
     {
         get => _selectedOperatorForCondition;
         set
         {
             _selectedOperatorForCondition = value;
+            CurrentConsecutiveCount = 0;
+            ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
             RaisePropertyChanged();
         }
     }
@@ -77,6 +96,7 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
         set
         {
             _operatorsForCondition = value;
+            
             RaisePropertyChanged();
         }
     }
@@ -107,6 +127,10 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
 
                     var prop = PropertiesForCondition.First(s => s.PropertyName == value.PropertyName);
                     _selectedPropertyForCondition = prop;
+
+                    CurrentConsecutiveCount = 0;
+                    ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
+
                 }
                 RaisePropertyChanged();
             }
@@ -119,9 +143,34 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
         set
         {
             _valueForCondition = value;
+            CurrentConsecutiveCount = 0;
+            ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
+
             RaisePropertyChanged();
         }
     }
+
+
+    public string? AimedConsecutiveCount
+    {
+        get => _aimedConsecutiveCount;
+        set
+        {
+            _aimedConsecutiveCount = value;
+            RaisePropertyChanged();
+        }
+    }
+
+    public int CurrentConsecutiveCount
+    {
+        get => _currentConsecutiveCount;
+        set
+        {
+            _currentConsecutiveCount = value;
+            RaisePropertyChanged();
+        }
+    }
+
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -226,12 +275,30 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
 
             if (ValueForCondition is not { } _)
             {
-                return "Unexpected value format.";
+                return "Unexpected condition value format.";
             }
 
             if (ValueForCondition is { } s && s.Any(c => !char.IsDigit(c) && c != decimalSeparator))
             {
-                return "Value is not a valid decimal number.";
+                return "Condition value is not a valid decimal number.";
+            }
+
+            if (AimedConsecutiveCount is not { } _)
+            {
+                return "Unexpected value for format.";
+            }
+
+            if (AimedConsecutiveCount is { } d && d.Any(c => !char.IsDigit(c)))
+            {
+                return "Value for consecutive count must be a whole number.";
+            }
+
+
+            int aimedConsecutiveCountLowerLimit = 1;
+            int aimedConsecutiveCountUpperLimit = 999;
+            if (!IsCheckStringForNumericLimitsValid(AimedConsecutiveCount, aimedConsecutiveCountLowerLimit, aimedConsecutiveCountUpperLimit))
+            {
+                return $"Value for consecutive count must be between {aimedConsecutiveCountLowerLimit} and {aimedConsecutiveCountUpperLimit}";
             }
 
             return string.Empty;
@@ -247,6 +314,16 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
         }
 
         return string.Empty;
+    }
+
+    private bool IsCheckStringForNumericLimitsValid(string valueToCheck, int lowerLimit , int upperLimit  )
+    {
+        var result = false;
+        if (!string.IsNullOrWhiteSpace(valueToCheck) && int.TryParse(valueToCheck, out var parsedValue))
+        {
+            result = parsedValue>= lowerLimit && parsedValue<= upperLimit;
+        }
+        return result;
     }
 
     private void SettingsChanged(object? sender, PropertyChangedEventArgs e)
