@@ -303,11 +303,19 @@ namespace NINA.StarMessenger.Communication.Trigger.Pushover
                     Logger.Debug($"Condition in {nameof(SendStarMessageToPushoverByConditionTrigger)}.{nameof(ConditionsFulfilled)}: " +
                                     $"actualValue = {parsingResult.firstValueParsed} {condition.SelectedOperatorForCondition} conditionValue = {parsingResult.secondValueParsed}");
 
-                    if (CheckConditionByOperator(parsingResult.firstValueParsed, parsingResult.secondValueParsed, condition))
+                    if (IsConditionCheckedByOperatorFullfilled(parsingResult.firstValueParsed, parsingResult.secondValueParsed, condition))
                     {
-                        Logger.Debug($"{nameof(SendStarMessageToPushoverByConditionTrigger)}.{nameof(ConditionsFulfilled)}: Condition set to fulfilled");
-                        DataProvider.SetPropertyConditionIsFulfilled<PushoverClient>(condition.SelectedPropertyForCondition?.PropertyName);
-                        atLeastOneConditionFulfilled = true;
+                        if (IsAimedConsecutiveCountReached(condition))
+                        {
+                            Logger.Debug($"{nameof(SendStarMessageToPushoverByConditionTrigger)}.{nameof(ConditionsFulfilled)}: Condition set to fulfilled");
+                            DataProvider.SetPropertyConditionIsFulfilled<PushoverClient>(condition.SelectedPropertyForCondition?.PropertyName);
+                            atLeastOneConditionFulfilled = true;
+                        }
+                    }
+                    else
+                    {
+                        condition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
+                        condition.CurrentConsecutiveCount = 0;
                     }
                 }
             }
@@ -315,8 +323,42 @@ namespace NINA.StarMessenger.Communication.Trigger.Pushover
             return atLeastOneConditionFulfilled;
         }
 
+        private static bool IsAimedConsecutiveCountReached(Condition<SendStarMessageToPushoverByConditionTrigger> currentCondition)
+        {
+            int aimedConsecutiveCount = 1;
+            if (!string.IsNullOrWhiteSpace(currentCondition.AimedConsecutiveCount) && int.TryParse(currentCondition.AimedConsecutiveCount, out var parsed))
+            {
+                aimedConsecutiveCount = parsed;
+            }
 
-        private static bool CheckConditionByOperator(object actualValueParsed, object expectedValueParsed, Condition<SendStarMessageToPushoverByConditionTrigger> currentCondition)
+            currentCondition.CurrentConsecutiveCount++;
+            
+            //  To avoid stack overflow
+            if ((currentCondition.CurrentConsecutiveCount >= int.MaxValue-10) && currentCondition.CurrentConsecutiveCount > aimedConsecutiveCount)
+                                {
+                {
+                    currentCondition.CurrentConsecutiveCount = aimedConsecutiveCount;
+                }
+            }
+
+            if (currentCondition.CurrentConsecutiveCount < 1)
+            {
+                currentCondition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
+            }
+            else
+            if (currentCondition.CurrentConsecutiveCount >= 1 && currentCondition.CurrentConsecutiveCount < aimedConsecutiveCount)
+            {
+                currentCondition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Warning;
+            }
+            else
+            {
+                currentCondition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Error;
+            }
+
+            return currentCondition.CurrentConsecutiveCount >= aimedConsecutiveCount;
+        }
+
+        private static bool IsConditionCheckedByOperatorFullfilled(object actualValueParsed, object expectedValueParsed, Condition<SendStarMessageToPushoverByConditionTrigger> currentCondition)
         {
             if (currentCondition.SelectedPropertyForCondition == null)
             {

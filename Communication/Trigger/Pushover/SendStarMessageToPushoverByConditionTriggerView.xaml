@@ -12,8 +12,10 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                           xmlns:nina="clr-namespace:NINA.View.Sequencer;assembly=NINA.Sequencer"
                           xmlns:converters="clr-namespace:NINA.Core.Utility.Converters;assembly=NINA.Core"
                           xmlns:pushover="clr-namespace:NINA.StarMessenger.Communication.Trigger.Pushover"
-                          xmlns:customControlLibrary="clr-namespace:NINA.CustomControlLibrary;assembly=NINA.CustomControlLibrary">
+                          xmlns:customControlLibrary="clr-namespace:NINA.CustomControlLibrary;assembly=NINA.CustomControlLibrary"
+                          xmlns:local="clr-namespace:NINA.StarMessenger.Communication.Trigger">
     <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    <local:StatusToBrushConverter x:Key="StatusColorConverter" />
     <DataTemplate DataType="{x:Type pushover:SendStarMessageToPushoverByConditionTrigger}">
         <nina:SequenceBlockView>
             <nina:SequenceBlockView.SequenceItemContent>
@@ -61,15 +63,64 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                                 ItemsSource="{Binding OperatorsForCondition}"
                                 SelectedItem="{Binding SelectedOperatorForCondition, Mode=TwoWay}" />
 
-                                        <TextBox MinWidth="60"
+                                <TextBox MinWidth="60"
                                      Margin="5,3,0,3"
                                      MaxLines="1"
                                      TextWrapping="NoWrap"
                                      TextAlignment="Left"
                                      Height="25"
                                      Text="{Binding ValueForCondition, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, Mode=TwoWay}"/>
-                                        <TextBlock Margin="10,7,0,0" Text="or"
-                                       Visibility="{Binding Path=IsOrTextVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+
+                                        <TextBlock VerticalAlignment="Center" Text="CCL:" Margin="10,0,10,0">
+                                            <TextBlock.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock>
+                                                    <Run FontWeight="Bold">Consecutive Count Limit:</Run>
+                                                    <LineBreak/>
+                                                    Number of consecutive condition matches required before a StarMessage is sent.
+                                                    <LineBreak/>
+                                                    1: StarMessage is directly sent if condition is fullfiled for the first time. 
+                                                    <LineBreak/>
+                                                    2: StarMessage will be sent after the condition has been fulfilled twice in succession
+                                                    <LineBreak/>
+                                                    3: StarMessage will be sent after the condition has been fulfilled three times in succession
+                                                    <LineBreak/>
+                                                    etc.
+                                                    </TextBlock>
+                                                </ToolTip>
+                                            </TextBlock.ToolTip>
+                                        </TextBlock>
+
+
+                                        <TextBox MinWidth="30"
+                                             Margin="0,3,0,3"
+                                             MaxLines="1"
+                                             TextWrapping="NoWrap"
+                                             TextAlignment="Left"
+                                             Height="25"
+                                             Text="{Binding AimedConsecutiveCount, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, Mode=TwoWay}"/>
+
+
+                                        <TextBlock Margin="5,7,0,0" FontWeight="Bold"
+                                                   Foreground="{Binding ConsecutiveCountStatusLevel, Converter={StaticResource StatusColorConverter}}">
+
+                                                    <Run Text="(" />
+                                                    <Run Text="{Binding Path=CurrentConsecutiveCount}" />
+                                                    <Run Text=")" />
+
+
+                                            <TextBlock.ToolTip>
+                                                <ToolTip>
+                                                    <TextBlock>
+                                                      Number of times the condition has been met consecutively.
+                                                    </TextBlock>
+                                                </ToolTip>
+                                            </TextBlock.ToolTip>
+                                            
+                                        </TextBlock>
+
+                                        <TextBlock Margin="10,7,0,0" Text="or" Visibility="{Binding Path=IsOrTextVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                                     </StackPanel>
 
                                 </DataTemplate>
@@ -134,7 +185,6 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
             </nina:SequenceBlockView.SequenceItemContent>
         </nina:SequenceBlockView>
     </DataTemplate>
-
 
     <GeometryGroup x:Key="StarMessageTriggerIcon">
         <PathGeometry Figures="m 86.8485 97.9123 v 15.0368 l -4.6228 5.3848 h -32.0548 l -4.572 -5.2324 h 28.6004 l 1.8796 -2.1844 v -7.7724 h -29.1084 V 88.4127 l 4.826 -5.6388 h 36.2712 l -4.4704 5.2324 h -23.7236 l -2.286 2.5908 v 7.3152 z m 43.942 7.8232 h -28.702 v 12.5984 H 91.4205 V 82.7739 h 39.37 z m -10.668 -17.7292 h -18.1356 v 12.4968 h 18.1356 z" FillRule="Nonzero"/>

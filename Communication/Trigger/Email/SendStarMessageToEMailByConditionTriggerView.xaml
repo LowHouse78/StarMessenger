@@ -12,88 +12,136 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                           xmlns:nina="clr-namespace:NINA.View.Sequencer;assembly=NINA.Sequencer"
                           xmlns:converters="clr-namespace:NINA.Core.Utility.Converters;assembly=NINA.Core"
                           xmlns:email="clr-namespace:NINA.StarMessenger.Communication.Trigger.Email"
-                          xmlns:customControlLibrary="clr-namespace:NINA.CustomControlLibrary;assembly=NINA.CustomControlLibrary">
-    <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
-    <DataTemplate DataType="{x:Type email:SendStarMessageToEmailByConditionTrigger}">
-        <nina:SequenceBlockView>
-            <nina:SequenceBlockView.SequenceItemContent>
-                <StackPanel>
-                    <ItemsControl ItemsSource="{Binding Conditions}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+                          xmlns:customControlLibrary="clr-namespace:NINA.CustomControlLibrary;assembly=NINA.CustomControlLibrary"
+                          xmlns:local="clr-namespace:NINA.StarMessenger.Communication.Trigger">
+  <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+  <local:StatusToBrushConverter x:Key="StatusColorConverter" />
+  <DataTemplate DataType="{x:Type email:SendStarMessageToEmailByConditionTrigger}">
+    <nina:SequenceBlockView>
+      <nina:SequenceBlockView.SequenceItemContent>
+        <StackPanel>
+          <ItemsControl ItemsSource="{Binding Conditions}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
 
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock VerticalAlignment="Center" Text="Condition: " Margin="0,0,5,0" />
+                <StackPanel Orientation="Horizontal">
+                  <TextBlock VerticalAlignment="Center" Text="Condition: " Margin="0,0,5,0" />
 
-                                    <ComboBox
-                        Width="140"
-                        Margin="0,0,5,0"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Left"
-                        HorizontalContentAlignment="Left"
-                        ItemsSource="{Binding PropertiesForCondition}"
-                        SelectedItem="{Binding SelectedPropertyForCondition, Mode=TwoWay}" >
-                                        <ComboBox.ItemContainerStyle>
-                                            <Style TargetType="ComboBoxItem">
-                                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                                                <Setter Property="HorizontalContentAlignment" Value="Left"/>
-                                            </Style>
-                                        </ComboBox.ItemContainerStyle>
-                                        <ComboBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <TextBlock Text="{Binding PropertyUserFriendlyName}" TextAlignment="Left"/>
-                                            </DataTemplate>
-                                        </ComboBox.ItemTemplate>
-                                    </ComboBox>
+                  <ComboBox
+      Width="140"
+      Margin="0,0,5,0"
+      VerticalAlignment="Center"
+      HorizontalAlignment="Left"
+      HorizontalContentAlignment="Left"
+      ItemsSource="{Binding PropertiesForCondition}"
+      SelectedItem="{Binding SelectedPropertyForCondition, Mode=TwoWay}" >
+                    <ComboBox.ItemContainerStyle>
+                      <Style TargetType="ComboBoxItem">
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                      </Style>
+                    </ComboBox.ItemContainerStyle>
+                    <ComboBox.ItemTemplate>
+                      <DataTemplate>
+                        <TextBlock Text="{Binding PropertyUserFriendlyName}" TextAlignment="Left"/>
+                      </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                  </ComboBox>
 
-                                    <ComboBox
-                        Width="5"
-                        Margin="0,0,5,0"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        HorizontalContentAlignment="Center"
-                        ItemsSource="{Binding OperatorsForCondition}"
-                        SelectedItem="{Binding SelectedOperatorForCondition, Mode=TwoWay}" />
+                  <ComboBox
+      Width="5"
+      Margin="0,0,5,0"
+      HorizontalAlignment="Center"
+      VerticalAlignment="Center"
+      HorizontalContentAlignment="Center"
+      ItemsSource="{Binding OperatorsForCondition}"
+      SelectedItem="{Binding SelectedOperatorForCondition, Mode=TwoWay}" />
 
-                                    <TextBox MinWidth="60"
-                                             Margin="5,3,0,3"
-                                             MaxLines="1"
-                                             TextWrapping="NoWrap"
-                                             TextAlignment="Left"
-                                             Height="25"
-                                             Text="{Binding ValueForCondition, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, Mode=TwoWay}"/>
-                                    <TextBlock Margin="10,7,0,0" Text="or"
-                                               Visibility="{Binding Path=IsOrTextVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
+                  <TextBox MinWidth="60"
+      Margin="5,3,0,3"
+      MaxLines="1"
+      TextWrapping="NoWrap"
+      TextAlignment="Left"
+      Height="25"
+      Text="{Binding ValueForCondition, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, Mode=TwoWay}"/>
 
-                                </StackPanel>
 
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <customControlLibrary:AsyncProcessButton
-                        HorizontalAlignment="Left"
-                        Margin="0,0,0,5"
-                        Width="328" Height="25"
-                        ButtonForegroundBrush="{StaticResource ButtonForegroundBrush}"
-                        ButtonText="Add Condition"
-                        Command="{Binding AddConditionCommand}" 
-                        LoadingImageBrush="{StaticResource PrimaryBrush}" />
+                  <TextBlock VerticalAlignment="Center" Text="CCL:" Margin="10,0,10,0">
+                    <TextBlock.ToolTip>
+                      <ToolTip>
+                        <TextBlock>
+                          <Run FontWeight="Bold">Consecutive Count Limit:</Run>
+                          <LineBreak/>
+                          Number of consecutive condition matches required before a StarMessage is sent.
+                          <LineBreak/>
+                          1: StarMessage is directly sent if condition is fullfiled for the first time.
+                          <LineBreak/>
+                          2: StarMessage will be sent after the condition has been fulfilled twice in succession
+                          <LineBreak/>
+                          3: StarMessage will be sent after the condition has been fulfilled three times in succession
+                          <LineBreak/>
+                          etc.
+                        </TextBlock>
+                      </ToolTip>
+                    </TextBlock.ToolTip>
+                  </TextBlock>
 
-                    <customControlLibrary:AsyncProcessButton
-                        HorizontalAlignment="Left"
-                        Width="328" Height="25"
-                        ButtonForegroundBrush="{StaticResource ButtonForegroundBrush}"
-                        ButtonText="Remove last Condition"
-                        Command="{Binding RemoveConditionCommand}" 
-                        LoadingImageBrush="{StaticResource PrimaryBrush}" />
+
+                  <TextBox MinWidth="30"
+              Margin="0,3,0,3"
+              MaxLines="1"
+              TextWrapping="NoWrap"
+              TextAlignment="Left"
+              Height="25"
+              Text="{Binding AimedConsecutiveCount, UpdateSourceTrigger=PropertyChanged, ValidatesOnDataErrors=True, Mode=TwoWay}"/>
+
+
+                  <TextBlock Margin="5,7,0,0" FontWeight="Bold" Foreground="{Binding ConsecutiveCountStatusLevel, Converter={StaticResource StatusColorConverter}}">
+
+                    <Run Text="(" />
+                    <Run Text="{Binding Path=CurrentConsecutiveCount}" />
+                    <Run Text=")" />
+
+
+                    <TextBlock.ToolTip>
+                      <ToolTip>
+                        <TextBlock>
+                          Number of times the condition has been met consecutively.
+                        </TextBlock>
+                      </ToolTip>
+                    </TextBlock.ToolTip>
+
+                  </TextBlock>
+
+                  <TextBlock Margin="10,7,0,0" Text="or" Visibility="{Binding Path=IsOrTextVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                 </StackPanel>
-            </nina:SequenceBlockView.SequenceItemContent>
-        </nina:SequenceBlockView>
-    </DataTemplate>
 
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <customControlLibrary:AsyncProcessButton
+              HorizontalAlignment="Left"
+              Margin="0,0,0,5"
+              Width="328" Height="25"
+              ButtonForegroundBrush="{StaticResource ButtonForegroundBrush}"
+              ButtonText="Add Condition"
+              Command="{Binding AddConditionCommand}"
+              LoadingImageBrush="{StaticResource PrimaryBrush}" />
 
-    <GeometryGroup x:Key="StarMessageEMailIcon">
-        <PathGeometry Figures="m 86.8485 97.9123 v 15.0368 l -4.6228 5.3848 h -32.0548 l -4.572 -5.2324 h 28.6004 l 1.8796 -2.1844 v -7.7724 h -29.1084 V 88.4127 l 4.826 -5.6388 h 36.2712 l -4.4704 5.2324 h -23.7236 l -2.286 2.5908 v 7.3152 z m 9.90602 20.3708 l 36.83 0.0508 l -4.572 -5.334 l -27.0764 0.0508 l -2.6416 -2.9972 V 90.8511 l 2.6416 -2.9464 h 19.9136 l 2.54 2.9464 v 13.716 h -3.81 v -9.906 l -1.778 -2.0828 h -13.8176 l -1.778 2.0828 v 11.6332 l 1.778 2.1336 h 26.7716 V 88.4127 l -4.7244 -5.6388 H 96.7545 l -4.826 5.6388 V 112.594 Z M 114.636 97.4551 v 5.9944 l -0.9652 1.1176 h -3.5052 l -0.9652 -1.1176 v -5.9944 l 0.9652 -1.1176 h 3.5052 z" FillRule="Nonzero"/>
-    </GeometryGroup>
+          <customControlLibrary:AsyncProcessButton
+              HorizontalAlignment="Left"
+              Width="328" Height="25"
+              ButtonForegroundBrush="{StaticResource ButtonForegroundBrush}"
+              ButtonText="Remove last Condition"
+              Command="{Binding RemoveConditionCommand}"
+              LoadingImageBrush="{StaticResource PrimaryBrush}" />
+        </StackPanel>
+      </nina:SequenceBlockView.SequenceItemContent>
+    </nina:SequenceBlockView>
+  </DataTemplate>
+
+  <GeometryGroup x:Key="StarMessageEMailIcon">
+    <PathGeometry Figures="m 86.8485 97.9123 v 15.0368 l -4.6228 5.3848 h -32.0548 l -4.572 -5.2324 h 28.6004 l 1.8796 -2.1844 v -7.7724 h -29.1084 V 88.4127 l 4.826 -5.6388 h 36.2712 l -4.4704 5.2324 h -23.7236 l -2.286 2.5908 v 7.3152 z m 9.90602 20.3708 l 36.83 0.0508 l -4.572 -5.334 l -27.0764 0.0508 l -2.6416 -2.9972 V 90.8511 l 2.6416 -2.9464 h 19.9136 l 2.54 2.9464 v 13.716 h -3.81 v -9.906 l -1.778 -2.0828 h -13.8176 l -1.778 2.0828 v 11.6332 l 1.778 2.1336 h 26.7716 V 88.4127 l -4.7244 -5.6388 H 96.7545 l -4.826 5.6388 V 112.594 Z M 114.636 97.4551 v 5.9944 l -0.9652 1.1176 h -3.5052 l -0.9652 -1.1176 v -5.9944 l 0.9652 -1.1176 h 3.5052 z" FillRule="Nonzero"/>
+  </GeometryGroup>
 
 </ResourceDictionary>
