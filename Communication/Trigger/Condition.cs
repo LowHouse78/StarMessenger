@@ -12,7 +12,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
-using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using Newtonsoft.Json;
 using NINA.Core.Utility;
@@ -157,6 +156,8 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
         set
         {
             _aimedConsecutiveCount = value;
+            CurrentConsecutiveCount = 0;
+            ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
             RaisePropertyChanged();
         }
     }
@@ -170,7 +171,6 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
             RaisePropertyChanged();
         }
     }
-
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

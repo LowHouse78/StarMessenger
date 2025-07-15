@@ -13,9 +13,9 @@ There are provided instructions and triggers
 
 ## Supported services
 
-* Email 
 * Pushover
 * NTFY
+* Email 
 
 ## Questions & Feedback
 

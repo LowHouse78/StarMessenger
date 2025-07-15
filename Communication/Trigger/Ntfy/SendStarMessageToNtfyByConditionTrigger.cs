@@ -259,7 +259,7 @@ namespace NINA.StarMessenger.Communication.Trigger.Ntfy
 
         }
 
-        //ToDo: make common for SendStarMessageToEmailByConditionTrigger
+        //ToDo:  make common for SendStarMessageToEmailByConditionTrigger
         private async Task<bool> ConditionsFulfilled()
         {
             var atLeastOneConditionFulfilled = false;
@@ -301,11 +301,19 @@ namespace NINA.StarMessenger.Communication.Trigger.Ntfy
                     Logger.Debug($"Condition in {nameof(SendStarMessageToNtfyByConditionTrigger)}.{nameof(ConditionsFulfilled)}: " +
                                     $"actualValue = {parsingResult.firstValueParsed} {condition.SelectedOperatorForCondition} conditionValue = {parsingResult.secondValueParsed}");
 
-                    if (CheckConditionByOperator(parsingResult.firstValueParsed, parsingResult.secondValueParsed, condition))
+                    if (IsConditionCheckedByOperatorFullfilled(parsingResult.firstValueParsed, parsingResult.secondValueParsed, condition))
                     {
-                        Logger.Debug($"{nameof(SendStarMessageToNtfyByConditionTrigger)}.{nameof(ConditionsFulfilled)}: Condition set to fulfilled");
-                        DataProvider.SetPropertyConditionIsFulfilled<NtfyClient>(condition.SelectedPropertyForCondition?.PropertyName);
-                        atLeastOneConditionFulfilled = true;
+                        if (IsAimedConsecutiveCountReached(condition))
+                        {
+                            Logger.Debug($"{nameof(SendStarMessageToNtfyByConditionTrigger)}.{nameof(ConditionsFulfilled)}: Condition set to fulfilled");
+                            DataProvider.SetPropertyConditionIsFulfilled<NtfyClient>(condition.SelectedPropertyForCondition?.PropertyName);
+                            atLeastOneConditionFulfilled = true;
+                        }
+                    }
+                    else
+                    {
+                        condition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
+                        condition.CurrentConsecutiveCount = 0;
                     }
                 }
             }
@@ -313,8 +321,42 @@ namespace NINA.StarMessenger.Communication.Trigger.Ntfy
             return atLeastOneConditionFulfilled;
         }
 
+        private static bool IsAimedConsecutiveCountReached(Condition<SendStarMessageToNtfyByConditionTrigger> currentCondition)
+        {
+            int aimedConsecutiveCount = 1;
+            if (!string.IsNullOrWhiteSpace(currentCondition.AimedConsecutiveCount) && int.TryParse(currentCondition.AimedConsecutiveCount, out var parsed))
+            {
+                aimedConsecutiveCount = parsed;
+            }
 
-        private static bool CheckConditionByOperator(object actualValueParsed, object expectedValueParsed, Condition<SendStarMessageToNtfyByConditionTrigger> currentCondition)
+            currentCondition.CurrentConsecutiveCount++;
+
+            // To avoid stack overflow
+            if ((currentCondition.CurrentConsecutiveCount >= int.MaxValue - 10) && currentCondition.CurrentConsecutiveCount > aimedConsecutiveCount)
+            {
+                {
+                    currentCondition.CurrentConsecutiveCount = aimedConsecutiveCount;
+                }
+            }
+
+            if (currentCondition.CurrentConsecutiveCount < 1)
+            {
+                currentCondition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Ok;
+            }
+            else
+            if (currentCondition.CurrentConsecutiveCount >= 1 && currentCondition.CurrentConsecutiveCount < aimedConsecutiveCount)
+            {
+                currentCondition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Warning;
+            }
+            else
+            {
+                currentCondition.ConsecutiveCountStatusLevel = ConsecutiveCountStatusLevelType.Error;
+            }
+
+            return currentCondition.CurrentConsecutiveCount >= aimedConsecutiveCount;
+        }
+
+        private static bool IsConditionCheckedByOperatorFullfilled(object actualValueParsed, object expectedValueParsed, Condition<SendStarMessageToNtfyByConditionTrigger> currentCondition)
         {
             if (currentCondition.SelectedPropertyForCondition == null)
             {

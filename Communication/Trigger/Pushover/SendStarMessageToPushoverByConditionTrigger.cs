@@ -333,7 +333,7 @@ namespace NINA.StarMessenger.Communication.Trigger.Pushover
 
             currentCondition.CurrentConsecutiveCount++;
             
-            // To avoid stack overflow
+            //  To avoid stack overflow
             if ((currentCondition.CurrentConsecutiveCount >= int.MaxValue-10) && currentCondition.CurrentConsecutiveCount > aimedConsecutiveCount)
                                 {
                 {

@@ -19,8 +19,8 @@ using System.Runtime.InteropServices;
 
 // [MANDATORY] The assembly versioning
 //Should be incremented for each new release build of a plugin
-[assembly: AssemblyVersion("0.3.1.0")]
-[assembly: AssemblyFileVersion("0.3.1.0")]
+[assembly: AssemblyVersion("1.0.0.0")]
+[assembly: AssemblyFileVersion("1.0.0.0")]
 
 // [MANDATORY] The name of your plugin
 [assembly: AssemblyTitle("StarMessenger")]
@@ -48,15 +48,20 @@ using System.Runtime.InteropServices;
 //[Optional] Common tags that quickly describe your plugin
 [assembly: AssemblyMetadata("Tags", "messenger, information, pushover, ntfy, notification, offline")]
 
-//[Optional] An in-depth description of your plugin
-[assembly: AssemblyMetadata("LongDescription", @"This plugin provides the user with information from the N.I.N.A imaging session via Pushover, Ntfy or Email.
-                            It is possible to configure which information the StarMessage contains. Furthermore, the user can use 'Message by Condition' to determine 
-                            the condition on the basis of which the message is to be sent. 
-                            If you have question or feedback, let me know in Discord: wizzardKvothe|Sascha or write an email to: wizzardkvothe78@gmail.com")]
-
 //[Optional] The url to a featured logo that will be displayed in the plugin list next to the name
-[assembly: AssemblyMetadata("FeaturedImageURL", "https://bitbucket.org/wizzardkvothe/starmessenger/raw/689922c72ca6f5c9763b495e1d93ee8f92511499/NINA.StarMessenger/starmessenger.png")]
+[assembly: AssemblyMetadata("FeaturedImageURL", "https://raw.githubusercontent.com/LowHouse78/StarMessenger/refs/tags/V0.3.1.0/starmessenger.png")]
 
+//[Optional] An in-depth description of your plugin
+[assembly: AssemblyMetadata("LongDescription", @"This plugin provides the user with information from the N.I.N.A imaging session via Pushover, Ntfy or Email. It is possible to configure which information the StarMessage contains. Furthermore, the user can use 'Message by Condition' to determine 
+                            the condition on the basis of which the message is to be sent. 
+
+It is recommended to use Pushover or NTFY notification instead of Email. There is more functionality here, the route is more direct and the two-factor authentication with the Email service provider can be difficult.
+
+If you have question or feedback, let me know in Discord: wizzardKvothe|Sascha or write an email to: wizzardkvothe78@gmail.com
+
+# Write me  #
+With leaving the beta status and the first release StarMessenger V1.0 (2025-07-15) I had about 1.000 downloads of the plugin. Unfortunately I can't see if the plugin is really used after download.  Write to me if you are really using StarMessenger: wizzardkvothe78@gmail.com
+Knowing that your own piece of software helps others means a lot to a software developer ;-)")]
 
 // [Unused]
 [assembly: AssemblyConfiguration("")]
