@@ -1,5 +1,10 @@
 ﻿# StarMessenger
 
+## 1.0.0.0 - 2025-07-15
+* Added: CCL - Consecutive Counter Limit
+	  Number of consecutive condition fulfillments until a StarMessage is sent
+
+* 
 ## 0.3.1.0 - 2024-11-16 (beta)
 * Fix: No empty message with 'Dec: RA:'
 
