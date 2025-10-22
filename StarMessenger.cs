@@ -41,6 +41,13 @@ namespace NINA.StarMessenger
         {
             try
             {
+                if (Settings.Default.UpgradeSettings)
+                {
+                    Settings.Default.Upgrade();
+                    Settings.Default.UpgradeSettings = false;
+                    CoreUtil.SaveSettings(Settings.Default);
+                }
+
                 SendPushoverTestMessageCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() =>
                 {
                     const int timeoutSendStarMessagePushoverInMilliSeconds = 30000;
