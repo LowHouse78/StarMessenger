@@ -1,5 +1,8 @@
 ﻿# StarMessenger
 
+## 1.0.1.0 - 2025-10-22
+* Fix: Messenger credentials no longer disappear after N.I.N.A update
+
 ## 1.0.0.0 - 2025-07-15
 * Added: CCL - Consecutive Counter Limit
 	  Number of consecutive condition fulfillments until a StarMessage is sent
