@@ -75,6 +75,25 @@ namespace NINA.StarMessenger.Tests.Processing
             Evaluate(TestSnapshots.Create(2, ("Stars", 420)), condition).Should().BeEmpty();
         }
 
+        [TestCase(6, true)]
+        [TestCase(5, false)]
+        [TestCase(4, false)]
+        public void Evaluate_BortleCondition(int bortle, bool expected)
+        {
+            var condition = CreateCondition<Owner>("Bortle", ">", "5");
+
+            Evaluate(TestSnapshots.Create(1, ("Bortle", bortle)), condition).Contains("Bortle").Should().Be(expected);
+        }
+
+        [Test]
+        public void Evaluate_SkyQualityCondition()
+        {
+            var condition = CreateCondition<Owner>("SkyQuality", "<", 19.5.ToString());
+
+            Evaluate(TestSnapshots.Create(1, ("SkyQuality", 18.9)), condition).Should().Contain("SkyQuality");
+            Evaluate(TestSnapshots.Create(2, ("SkyQuality", 20.8)), condition).Should().BeEmpty();
+        }
+
         [Test]
         public void Evaluate_RotatorPositionWithDecimals_IsComparedAsNumber()
         {

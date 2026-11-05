@@ -4,6 +4,8 @@
 * Changed: StarMessages are sent decoupled from the sequence. Triggers and instructions only queue the message,
   the sequence continues immediately. The message is sent as soon as N.I.N.A. has saved the image.
 * Added: Option 'Wait for delivery' for the StarMessage instructions (default: off)
+* Added: Parameters 'Sky Quality' (mag/arcsec² of the weather device in N.I.N.A., e.g. the EYE sensor of a
+  PrimaLuceLab EAGLE) and 'Bortle' (estimated from the sky quality), also usable in conditions
 * Added: Errors while sending are shown as N.I.N.A. notification
 * Fix: "StarMessage - no new image in history found" when saving the image took longer than 15 s
   (e.g. when not dithering after every exposure)

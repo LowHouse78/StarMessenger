@@ -113,6 +113,20 @@ namespace NINA.StarMessenger.Tests.Processing
             snapshot.GetValue("HFR").Should().BeNull();
             snapshot.GetValue("Stars").Should().BeNull();
             snapshot.GetValue("Filter").Should().BeNull();
+            snapshot.GetValue("SkyQuality").Should().BeNull("no weather device with sky quality connected");
+            snapshot.GetValue("Bortle").Should().BeNull();
+        }
+
+        [Test]
+        public void Create_SkyQualityOfWeatherDevice_AddsSkyQualityAndBortle()
+        {
+            var e = CreateEventArgs();
+            e.MetaData.WeatherData.SkyQuality = 20.856;
+
+            var snapshot = ImageSnapshotFactory.Create(e);
+
+            snapshot.GetValue("SkyQuality").Should().Be(20.86);
+            snapshot.GetValue("Bortle").Should().Be(4);
         }
     }
 }

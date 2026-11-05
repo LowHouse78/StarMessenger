@@ -322,6 +322,26 @@ namespace NINA.StarMessenger
             }
         }
 
+        public static bool SkyQuality
+        {
+            get => Settings.Default.SkyQuality;
+            set
+            {
+                Settings.Default.SkyQuality = value;
+                CoreUtil.SaveSettings(Settings.Default);
+            }
+        }
+
+        public static bool Bortle
+        {
+            get => Settings.Default.Bortle;
+            set
+            {
+                Settings.Default.Bortle = value;
+                CoreUtil.SaveSettings(Settings.Default);
+            }
+        }
+
         public static bool Image
         {
             get => Settings.Default.Image;

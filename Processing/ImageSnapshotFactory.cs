@@ -59,6 +59,14 @@ namespace NINA.StarMessenger.Processing
             }
             AddRounded(values, nameof(Settings.Default.Temperature), temperature);
 
+            // Sky quality of the weather device in N.I.N.A., e.g. the EYE sensor of a PrimaLuceLab EAGLE
+            var skyQuality = metaData?.WeatherData?.SkyQuality ?? double.NaN;
+            if (!double.IsNaN(skyQuality) && !double.IsInfinity(skyQuality))
+            {
+                AddRounded(values, nameof(Settings.Default.SkyQuality), skyQuality);
+                AddValue(values, nameof(Settings.Default.Bortle), BortleScale.FromSkyQuality(skyQuality));
+            }
+
             if (metaData?.Focuser?.Position is { } focuserPosition)
             {
                 AddValue(values, nameof(Settings.Default.FocuserPosition), focuserPosition);

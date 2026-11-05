@@ -71,6 +71,8 @@ namespace NINA.StarMessenger.Providers
                     AddProperty(nameof(Settings.Default.Min), "Min", Settings.Default.Min, typeof(double));
                     AddProperty(nameof(Settings.Default.Max), "Max", Settings.Default.Max, typeof(double));
                     AddProperty(nameof(Settings.Default.Temperature), "Temperature", Settings.Default.Temperature, typeof(double));
+                    AddProperty(nameof(Settings.Default.SkyQuality), "Sky Quality", Settings.Default.SkyQuality, typeof(double));
+                    AddProperty(nameof(Settings.Default.Bortle), "Bortle", Settings.Default.Bortle, typeof(int));
                     AddProperty(nameof(Settings.Default.FocuserPosition), "Focus Position", Settings.Default.FocuserPosition, typeof(int));
                     AddProperty(nameof(Settings.Default.Filter), "Filter", Settings.Default.Filter, typeof(string));
                     AddProperty(nameof(Settings.Default.RotatorMechanicalPosition), "Rotator mech. pos.", Settings.Default.RotatorMechanicalPosition, typeof(double));
