@@ -270,47 +270,54 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
         if (SelectedPropertyForCondition.DataType == typeof(double) ||
             SelectedPropertyForCondition.DataType == typeof(int))
         {
-            var culture = CultureInfo.CurrentCulture;
-            var decimalSeparator = culture.NumberFormat.NumberDecimalSeparator[0];
-
-            if (ValueForCondition is not { } _)
+            if (ValueForCondition is not { } value)
             {
                 return "Unexpected condition value format.";
             }
 
-            if (ValueForCondition is { } s && s.Any(c => !char.IsDigit(c) && c != decimalSeparator))
+            // Negative values are allowed, e.g. Temperature < -10
+            const NumberStyles numberStyles = NumberStyles.AllowLeadingSign | NumberStyles.AllowLeadingWhite | NumberStyles.AllowTrailingWhite;
+            if (SelectedPropertyForCondition.DataType == typeof(int))
+            {
+                if (!int.TryParse(value, numberStyles, CultureInfo.CurrentCulture, out _))
+                {
+                    return "Condition value is not a valid whole number.";
+                }
+            }
+            else if (!double.TryParse(value, numberStyles | NumberStyles.AllowDecimalPoint, CultureInfo.CurrentCulture, out _))
             {
                 return "Condition value is not a valid decimal number.";
             }
-
-            if (AimedConsecutiveCount is not { } _)
-            {
-                return "Unexpected value for format.";
-            }
-
-            if (AimedConsecutiveCount is { } d && d.Any(c => !char.IsDigit(c)))
-            {
-                return "Value for consecutive count must be a whole number.";
-            }
-
-
-            int aimedConsecutiveCountLowerLimit = 1;
-            int aimedConsecutiveCountUpperLimit = 999;
-            if (!IsCheckStringForNumericLimitsValid(AimedConsecutiveCount, aimedConsecutiveCountLowerLimit, aimedConsecutiveCountUpperLimit))
-            {
-                return $"Value for consecutive count must be between {aimedConsecutiveCountLowerLimit} and {aimedConsecutiveCountUpperLimit}";
-            }
-
-            return string.Empty;
         }
-
-        if (SelectedPropertyForCondition.DataType == typeof(DateTime))
+        else if (SelectedPropertyForCondition.DataType == typeof(DateTime))
         {
             if (!DateTime.TryParse(ValueForCondition, out _))
             {
                 var pattern = DateTime.Now.ToString(CultureInfo.CurrentCulture);
                 return $"Value has not a valid date time format: e.g. {pattern}";
             }
+        }
+
+        return ValidateAimedConsecutiveCount();
+    }
+
+    private string ValidateAimedConsecutiveCount()
+    {
+        if (AimedConsecutiveCount is not { } aimedConsecutiveCount)
+        {
+            return "Unexpected value for format.";
+        }
+
+        if (aimedConsecutiveCount.Any(c => !char.IsDigit(c)))
+        {
+            return "Value for consecutive count must be a whole number.";
+        }
+
+        const int aimedConsecutiveCountLowerLimit = 1;
+        const int aimedConsecutiveCountUpperLimit = 999;
+        if (!IsCheckStringForNumericLimitsValid(aimedConsecutiveCount, aimedConsecutiveCountLowerLimit, aimedConsecutiveCountUpperLimit))
+        {
+            return $"Value for consecutive count must be between {aimedConsecutiveCountLowerLimit} and {aimedConsecutiveCountUpperLimit}";
         }
 
         return string.Empty;
@@ -334,15 +341,15 @@ public class Condition<T> : INotifyPropertyChanged, IValidatable
             {
                 return;
             }
-            var settingsType = sender.GetType();
-            var settingsPropertyInfo = settingsType.GetProperty(e.PropertyName);
-            var settingsValue = settingsPropertyInfo?.GetValue(sender);
-            if (settingsValue is bool newValue)
+            if (sender.GetType().GetProperty(e.PropertyName)?.GetValue(sender) is not bool newValue)
             {
-                var appliedProperty = _selectedPropertyForCondition;
-                var appliedPropertyType = appliedProperty?.GetType();
-                var appliedPropertyInfo = appliedPropertyType?.GetProperty(nameof(PropertyItem.IsEnabled));
-                appliedPropertyInfo?.SetValue(appliedProperty, newValue);
+                return;
+            }
+
+            // Only the property whose setting changed, not the selected one (which was the case before 1.1.0)
+            foreach (var property in _propertiesForCondition.Where(s => s.PropertyName == e.PropertyName))
+            {
+                property.IsEnabled = newValue;
             }
         }
         catch (Exception ex)

@@ -10,146 +10,102 @@
 #endregion "copyright"
 
 using NINA.Core.Utility;
-using NINA.StarMessenger.Providers;
+using NINA.StarMessenger.Processing;
 using NINA.StarMessenger.Utils;
 using System.IO;
 using System.Net.Http;
-using System.Text.Json;
-using System.ComponentModel;
 
 namespace NINA.StarMessenger.Communication.Pushover
 {
-
-    internal class PushoverClient
-
+    internal sealed class PushoverClient : IStarMessageChannel
     {
-        private readonly string _apiUrl = "https://api.pushover.net/1/messages.json";
-        private string _token;
-        private string _user;
+        private const string ApiUrl = "https://api.pushover.net/1/messages.json";
+        private static readonly HttpClient HttpClient = new();
 
-        internal PushoverClient()
+        private readonly string _sound;
+        private readonly string _priority;
+
+        /// <param name="sound">Pushover sound name, e.g. "pushover".</param>
+        /// <param name="priority">Pushover priority as number, e.g. "0".</param>
+        internal PushoverClient(string sound, string priority)
         {
-
-            _token = !string.IsNullOrEmpty(Settings.Default.PushoverApiKey)
-                ? DataProtector.DecryptString(Settings.Default.PushoverApiKey)
-                : string.Empty;
-
-            _user = !string.IsNullOrEmpty(Settings.Default.PushoverUserKey)
-                ? DataProtector.DecryptString(Settings.Default.PushoverUserKey)
-                : string.Empty;
-
-            Settings.Default.PropertyChanged += SettingsChanged!;
+            _sound = sound;
+            _priority = priority;
         }
 
-        internal void CancelCurrentProcessing()
+        /// <summary>Creates a client from the names shown in the sequencer (SoundTypes / PriorityTypes enum names).</summary>
+        internal static PushoverClient Create(string? notificationSound, string? priority)
         {
-            DataProvider.SkipCurrentProcessing();
-        }
-
-        internal async Task<bool> SendMessageAsync(string sound,
-                                                   string priority,
-                                                   TriggerSourceTypes triggerSource,
-                                                   CancellationToken token,
-                                                   bool testMessage = false)
-        {
-            return await Task.Run(async () =>
+            var parsedSound = SoundTypes.Pushover.ToString();
+            if (Enum.TryParse(typeof(SoundTypes), notificationSound, true, out var sound) && sound != null)
             {
-                string messageContent;
-                var imageFilePath = string.Empty;
-                if (!testMessage)
-                {
-                    messageContent = await DataProvider.RetrieveImageInformationDataAsync<PushoverClient>(token, triggerSource);
-                    imageFilePath = await DataProvider.RetrieveImageAsync();
-                }
-                else
-                {
-                    messageContent = "Test message from N.I.N.A";
-                }
-
-                if (string.IsNullOrEmpty(messageContent))
-                {
-                    return false;
-                }
-
-                using (HttpClient client = new HttpClient())
-                {
-                    try
-                    {
-                        using (var formData = new MultipartFormDataContent())
-                        {
-                            formData.Add(new StringContent(_token), "token");
-                            formData.Add(new StringContent(_user), "user");
-                            formData.Add(new StringContent(messageContent), "message");
-                            formData.Add(new StringContent(sound.ToLower()), "sound");
-                            formData.Add(new StringContent(priority), "priority");
-
-                            if (!string.IsNullOrEmpty(imageFilePath) && File.Exists(imageFilePath))
-                            {
-                                byte[] imageBytes = await File.ReadAllBytesAsync(imageFilePath);
-                                formData.Add(new ByteArrayContent(imageBytes, 0, imageBytes.Length), "attachment",
-                                    Path.GetFileName(imageFilePath));
-                            }
-
-                            if (!string.IsNullOrEmpty(imageFilePath))
-                            {
-                                File.Delete(imageFilePath);
-                            }
-
-                            HttpResponseMessage response = await client.PostAsync(_apiUrl, formData);
-                            response.EnsureSuccessStatusCode();
-
-                            var responseContent = await response.Content.ReadAsStringAsync();
-                            var result = JsonSerializer.Deserialize<PushoverResponse>(responseContent);
-
-                            return result?.Status == 1;
-                        }
-                    }
-                    catch (HttpRequestException e)
-                    {
-                        Logger.Error($"Request error while trying to send a Pushover message.", e);
-                    }
-                    catch (TaskCanceledException e) when (e.InnerException is TimeoutException)
-                    {
-                        Logger.Error($"Request timed out while trying to send a Pushover message.", e);
-                    }
-                    catch (TaskCanceledException e)
-                    {
-                        Logger.Error($"Request was canceled while trying to send a Pushover message.", e);
-                    }
-                    catch (UriFormatException e)
-                    {
-                        Console.WriteLine($"Invalid URL while trying to send a Pushover message: {e.Message}", e);
-                    }
-                    catch (InvalidOperationException e)
-                    {
-                        Logger.Error($"Invalid operation while trying to send a Pushover message: {e.Message}", e);
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.Error($"Unexpected error while trying to send a Pushover message: {e.Message}", e);
-                    }
-                    return false;
-                }
-            }, token);
-        }
-
-        private void SettingsChanged(object sender, PropertyChangedEventArgs e)
-        {
-            switch (e.PropertyName)
-            {
-                case nameof(Settings.Default.PushoverApiKey):
-                    _token = !string.IsNullOrEmpty(Settings.Default.PushoverApiKey)
-                        ? DataProtector.DecryptString(Settings.Default.PushoverApiKey)
-                        : string.Empty;
-                    break;
-
-                case nameof(Settings.Default.PushoverUserKey):
-                    _user = !string.IsNullOrEmpty(Settings.Default.PushoverUserKey)
-                            ? DataProtector.DecryptString(Settings.Default.PushoverUserKey)
-                            : string.Empty;
-                    break;
+                parsedSound = sound.ToString() ?? parsedSound;
             }
+
+            var parsedPriority = ((int)PriorityTypes.Normal).ToString();
+            if (Enum.TryParse(typeof(PriorityTypes), priority, true, out var tempPriority) && tempPriority != null)
+            {
+                parsedPriority = ((int)(PriorityTypes)tempPriority).ToString();
+            }
+
+            return new PushoverClient(parsedSound, parsedPriority);
+        }
+
+        public string Name => "Pushover";
+
+        public async Task<bool> SendAsync(string message, string? imageFilePath, CancellationToken token)
+        {
+            if (string.IsNullOrEmpty(message))
+            {
+                return false;
+            }
+
+            try
+            {
+                using var formData = new MultipartFormDataContent();
+                formData.Add(new StringContent(StarMessenger.PushoverAPIKey), "token");
+                formData.Add(new StringContent(StarMessenger.PushoverUserKey), "user");
+                formData.Add(new StringContent(message), "message");
+                formData.Add(new StringContent(_sound.ToLower()), "sound");
+                formData.Add(new StringContent(_priority), "priority");
+
+                if (!string.IsNullOrEmpty(imageFilePath) && File.Exists(imageFilePath))
+                {
+                    var imageBytes = await File.ReadAllBytesAsync(imageFilePath, token);
+                    formData.Add(new ByteArrayContent(imageBytes), "attachment", Path.GetFileName(imageFilePath));
+                }
+
+                using var response = await HttpClient.PostAsync(ApiUrl, formData, token);
+                var responseContent = await response.Content.ReadAsStringAsync(token);
+                if (!response.IsSuccessStatusCode)
+                {
+                    Logger.Error($"Pushover rejected the message: {(int)response.StatusCode} {responseContent}");
+                    return false;
+                }
+
+                var result = PushoverResponse.Parse(responseContent);
+                if (result?.IsAccepted != true)
+                {
+                    Logger.Error($"Pushover did not accept the message: {responseContent}");
+                    return false;
+                }
+
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (HttpRequestException e)
+            {
+                Logger.Error("Request error while trying to send a Pushover message.", e);
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Unexpected error while trying to send a Pushover message: {e.Message}", e);
+            }
+
+            return false;
         }
     }
-
 }

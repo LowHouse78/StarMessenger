@@ -64,6 +64,12 @@ namespace NINA.StarMessenger.Utils
         }
 
 
+        /// <summary>Decrypts a stored setting; an empty setting stays empty.</summary>
+        public static string DecryptSetting(string? storedValue)
+        {
+            return string.IsNullOrEmpty(storedValue) ? string.Empty : DecryptString(storedValue);
+        }
+
         public static string ConvertSecureString(SecureString value)
         {
             var valuePtr = IntPtr.Zero;

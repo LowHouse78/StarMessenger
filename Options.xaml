@@ -295,6 +295,14 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                     <TextBlock Width="100" Margin="0,7,5,0" Text="Rotator Position " />
                     <CheckBox Margin="0,5,0,0" IsChecked="{Binding RotatorPosition}" />
                 </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Width="100" Margin="0,7,5,0" Text="Sky Quality " ToolTip="Sky quality (mag/arcsec²) of the weather device connected in N.I.N.A., e.g. the EYE sensor of a PrimaLuceLab EAGLE" />
+                    <CheckBox Margin="0,5,0,0" IsChecked="{Binding SkyQuality}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Width="100" Margin="0,7,5,0" Text="Bortle " ToolTip="Bortle class estimated from the sky quality" />
+                    <CheckBox Margin="0,5,0,0" IsChecked="{Binding Bortle}" />
+                </StackPanel>
             </UniformGrid>
         </StackPanel>
     </DataTemplate>

@@ -433,5 +433,29 @@ namespace NINA.StarMessenger {
                 this["Median"] = value;
             }
         }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool SkyQuality {
+            get {
+                return ((bool)(this["SkyQuality"]));
+            }
+            set {
+                this["SkyQuality"] = value;
+            }
+        }
+
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool Bortle {
+            get {
+                return ((bool)(this["Bortle"]));
+            }
+            set {
+                this["Bortle"] = value;
+            }
+        }
     }
 }

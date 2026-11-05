@@ -1,5 +1,24 @@
 ﻿# StarMessenger
 
+## 1.1.0.0 - 2026-11-04
+* Changed: StarMessages are sent decoupled from the sequence. Triggers and instructions only queue the message,
+  the sequence continues immediately. The message is sent as soon as N.I.N.A. has saved the image.
+* Added: Option 'Wait for delivery' for the StarMessage instructions (default: off)
+* Added: Parameters 'Sky Quality' (mag/arcsec² of the weather device in N.I.N.A., e.g. the EYE sensor of a
+  PrimaLuceLab EAGLE) and 'Bortle' (estimated from the sky quality), also usable in conditions
+* Added: Errors while sending are shown as N.I.N.A. notification
+* Fix: "StarMessage - no new image in history found" when saving the image took longer than 15 s
+  (e.g. when not dithering after every exposure)
+* Fix: High CPU load while waiting for the image to be saved
+* Fix: Ntfy and Email credentials got lost when changed while N.I.N.A. was running
+* Fix: Negative values are allowed in conditions (e.g. Temperature < -10)
+* Fix: Disabling one parameter in the options also disabled the parameter selected in a condition
+* Fix: Temporary preview images of Email messages were not deleted
+* Fix: Sound and priority got lost when a trigger was copied
+* Changed: Temperature is taken from the focuser, otherwise from the weather station. Values that are not available
+  for an image (e.g. no rotator, no guiding) are left out instead of being shown as 0
+* Changed: Messages of an aborted sequence that are still waiting for their image are discarded
+
 ## 1.0.1.0 - 2025-10-22
 * Fix: Messenger credentials no longer disappear after N.I.N.A update
 

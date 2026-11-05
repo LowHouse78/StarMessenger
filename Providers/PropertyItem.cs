@@ -9,7 +9,6 @@ namespace NINA.StarMessenger.Providers
             PropertyName = deepCopy.PropertyName;
             PropertyUserFriendlyName = deepCopy.PropertyUserFriendlyName;
             IsEnabled = deepCopy.IsEnabled;
-            GetCurrentValueFunc = deepCopy.GetCurrentValueFunc;
             DataType = deepCopy.DataType;
             ConditionFulfilled = deepCopy.ConditionFulfilled;
         }
@@ -19,13 +18,11 @@ namespace NINA.StarMessenger.Providers
             string propertyUserFriendlyName,
             bool isEnabled,
             Type dataType,
-            Dictionary<Type, bool> conditionFulfilled,
-            Func<object?>? getCurrentValueFunc)
+            Dictionary<Type, bool> conditionFulfilled)
         {
             PropertyName = propertyName;
             PropertyUserFriendlyName = propertyUserFriendlyName;
             IsEnabled = isEnabled;
-            GetCurrentValueFunc = getCurrentValueFunc;
             DataType = dataType;
             ConditionFulfilled = conditionFulfilled;
         }
@@ -36,11 +33,9 @@ namespace NINA.StarMessenger.Providers
 
         public bool IsEnabled { get; set; }
 
-        [JsonIgnore]
-        public Func<object?>? GetCurrentValueFunc { get; set; }
-
         public Type DataType { get; set; }
 
+        /// <summary>No longer used. Kept, so sequences saved with older versions can still be loaded.</summary>
         public Dictionary<Type, bool> ConditionFulfilled { get; set; }
     }
 }

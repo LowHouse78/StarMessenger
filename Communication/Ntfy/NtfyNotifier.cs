@@ -9,7 +9,6 @@
 #endregion
 
 using NINA.StarMessenger.Communication.Ntfy.DTOs;
-using NINA.StarMessenger.Utils;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -21,69 +20,77 @@ namespace NINA.StarMessenger.Communication.Ntfy
 {
     public class NtfyNotifier
     {
-        private readonly HttpClient _httpClient;
+        private static readonly HttpClient HttpClient = new();
         private readonly string _ntfyTopic;
         private readonly string _ntfyServer;
 
         public NtfyNotifier(string ntfyServer, string ntfyTopic)
         {
-            _httpClient = new HttpClient();
             _ntfyServer = ntfyServer.TrimEnd('/');
             _ntfyTopic = ntfyTopic;
         }
 
-        public async Task SendMessageWithImageAsync(NtfySendingContent ntfySendingContent,
-                                                    NtfySendingCredentials ntfySendingCredentials,
-                                                    bool broadcastImage)
+        /// <param name="ntfySendingCredentials">Plain (already decrypted) credentials.</param>
+        /// <returns>true if the text message was accepted.</returns>
+        public async Task<bool> SendMessageWithImageAsync(NtfySendingContent ntfySendingContent,
+                                                          NtfySendingCredentials ntfySendingCredentials,
+                                                          bool broadcastImage,
+                                                          CancellationToken token = default)
         {
-
-            if (!string.IsNullOrWhiteSpace(ntfySendingCredentials.Token))
-            {
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Bearer", DataProtector.DecryptString(ntfySendingCredentials.Token));
-            }
-            else
-            if (!string.IsNullOrWhiteSpace(ntfySendingCredentials.Username) && !string.IsNullOrWhiteSpace(ntfySendingCredentials.Password))
-            {
-                var byteArray = Encoding.ASCII.GetBytes($@"{DataProtector.DecryptString(ntfySendingCredentials.Username)}:{DataProtector.DecryptString(ntfySendingCredentials.Password)}");
-
-                _httpClient.DefaultRequestHeaders.Authorization =
-                    new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
-
-            }
-
             var requestUri = $"{_ntfyServer}/{_ntfyTopic}";
+            var authorization = CreateAuthorization(ntfySendingCredentials);
 
-            var textContent = new StringContent(ntfySendingContent.Message);
+            using var textRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            textRequest.Headers.Authorization = authorization;
+            textRequest.Headers.Add("X-Priority", ntfySendingContent.Priority);
+            textRequest.Content = new StringContent(ntfySendingContent.Message, Encoding.UTF8, "text/plain");
 
-            textContent.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
-            textContent.Headers.Add("X-Priority", ntfySendingContent.Priority);
-
-            var responseBroadcastTextMessage = await _httpClient.PostAsync(requestUri, textContent);
-
+            using var responseBroadcastTextMessage = await HttpClient.SendAsync(textRequest, token);
             if (!responseBroadcastTextMessage.IsSuccessStatusCode)
             {
                 Logger.Error($"Failed to send NTFY message: {responseBroadcastTextMessage.ReasonPhrase}");
+                return false;
             }
 
-            if (broadcastImage && File.Exists(ntfySendingContent.ImagePath))
+            if (!broadcastImage)
             {
-                var imageBytes = File.ReadAllBytes(ntfySendingContent.ImagePath);
-                var imageContent = new ByteArrayContent(imageBytes);
-                var responseBroadcastImage = await _httpClient.PostAsync(requestUri, imageContent);
-                if (!responseBroadcastImage.IsSuccessStatusCode)
-                {
-                    Logger.Error($"Failed to send NTFY image message: {responseBroadcastImage.ReasonPhrase}");
-                }
+                return true;
+            }
 
-            }
-            else
+            if (!File.Exists(ntfySendingContent.ImagePath))
             {
-                if (broadcastImage)
-                {
-                    Logger.Error($"Image file not found when to sending a NTFY message.");
-                }
+                Logger.Error("Image file not found when to sending a NTFY message.");
+                return true;
             }
+
+            using var imageRequest = new HttpRequestMessage(HttpMethod.Post, requestUri);
+            imageRequest.Headers.Authorization = authorization;
+            imageRequest.Headers.Add("X-Filename", Path.GetFileName(ntfySendingContent.ImagePath));
+            imageRequest.Content = new ByteArrayContent(await File.ReadAllBytesAsync(ntfySendingContent.ImagePath, token));
+
+            using var responseBroadcastImage = await HttpClient.SendAsync(imageRequest, token);
+            if (!responseBroadcastImage.IsSuccessStatusCode)
+            {
+                Logger.Error($"Failed to send NTFY image message: {responseBroadcastImage.ReasonPhrase}");
+            }
+
+            return true;
+        }
+
+        private static AuthenticationHeaderValue? CreateAuthorization(NtfySendingCredentials credentials)
+        {
+            if (!string.IsNullOrWhiteSpace(credentials.Token))
+            {
+                return new AuthenticationHeaderValue("Bearer", credentials.Token);
+            }
+
+            if (!string.IsNullOrWhiteSpace(credentials.Username) && !string.IsNullOrWhiteSpace(credentials.Password))
+            {
+                var byteArray = Encoding.UTF8.GetBytes($"{credentials.Username}:{credentials.Password}");
+                return new AuthenticationHeaderValue("Basic", Convert.ToBase64String(byteArray));
+            }
+
+            return null;
         }
     }
 }
