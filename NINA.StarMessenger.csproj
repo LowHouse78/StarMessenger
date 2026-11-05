@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
     <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <DefaultItemExcludes>$(DefaultItemExcludes);NINA.StarMessenger.Tests\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,9 +29,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="SequenceItems\Pushover\SendToPushoverTemplate.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </None>
     <None Update="Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>

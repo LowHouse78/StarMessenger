@@ -37,6 +37,12 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
                                 </Style>
                             </ComboBox.ItemContainerStyle>
                         </ComboBox>
+                        <CheckBox
+                        Margin="15,3,0,3"
+                        VerticalAlignment="Center"
+                        Content="Wait for delivery"
+                        ToolTip="If checked, the sequence waits until the StarMessage has been sent. Otherwise it continues immediately."
+                        IsChecked="{Binding WaitForDelivery, Mode=TwoWay}" />
                     </StackPanel>
                 </Grid>
             </nina:SequenceBlockView.SequenceItemContent>

@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // In SDK-style projects such as this one, several assembly attributes that were historically
@@ -13,14 +14,18 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
 
+[assembly: InternalsVisibleTo("NINA.StarMessenger.Tests")]
+// Required by Moq to mock internal interfaces
+[assembly: InternalsVisibleTo("DynamicProxyGenAssembly2")]
+
 // The following GUID is for the ID of the typelib if this project is exposed to COM.
 
 [assembly: Guid("1348da65-ac4b-4562-bd6f-38d31c20ada3")]
 
 // [MANDATORY] The assembly versioning
 //Should be incremented for each new release build of a plugin
-[assembly: AssemblyVersion("1.0.1.0")]
-[assembly: AssemblyFileVersion("1.0.1.0")]
+[assembly: AssemblyVersion("1.1.0.0")]
+[assembly: AssemblyFileVersion("1.1.0.0")]
 
 // [MANDATORY] The name of your plugin
 [assembly: AssemblyTitle("StarMessenger")]
@@ -31,7 +36,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany("Sascha Lohaus")]
 // The product name that this plugin is part of
 [assembly: AssemblyProduct("StarMessenger")]
-[assembly: AssemblyCopyright("Copyright ©  2025")]
+[assembly: AssemblyCopyright("Copyright Â© 2024-2026")]
 
 // The minimum Version of N.I.N.A. that this plugin is compatible with
 [assembly: AssemblyMetadata("MinimumApplicationVersion", "3.0.0.3001")]
@@ -40,7 +45,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyMetadata("License", "MPL-2.0")]
 // The url to the license
 [assembly: AssemblyMetadata("LicenseURL", "https://www.mozilla.org/en-US/MPL/2.0/")]
-[assembly: AssemblyMetadata("Repository", "https://github.com/rennmaus-coder/ninaAPI")]
+[assembly: AssemblyMetadata("Repository", "https://github.com/LowHouse78/StarMessenger")]
 
 
 // The following attributes are optional for the official manifest meta data

@@ -14,16 +14,20 @@ using System.ComponentModel;
 using NINA.Core.Utility;
 using NINA.Plugin;
 using NINA.Plugin.Interfaces;
-using NINA.WPF.Base.Interfaces.ViewModel;
 using System.Runtime.CompilerServices;
+using NINA.Core.Utility.Notification;
 using NINA.Image.Interfaces;
 using NINA.StarMessenger.Providers;
 using NINA.StarMessenger.Utils;
 using NINA.Profile.Interfaces;
 using System.Windows.Input;
+using NINA.Sequencer.Interfaces.Mediator;
 using NINA.StarMessenger.Communication.Email;
 using NINA.StarMessenger.Communication.Ntfy;
 using NINA.StarMessenger.Communication.Pushover;
+using NINA.StarMessenger.Communication.Trigger;
+using NINA.StarMessenger.Processing;
+using NINA.WPF.Base.Interfaces.Mediator;
 using PriorityTypes = NINA.StarMessenger.Communication.Ntfy.PriorityTypes;
 
 namespace NINA.StarMessenger
@@ -34,10 +38,15 @@ namespace NINA.StarMessenger
     {
         public event PropertyChangedEventHandler? PropertyChanged;
 
+        private const string TestMessage = "Test message from N.I.N.A";
+        private readonly IImageSaveMediator _imageSaveMediator;
+        private readonly StarMessageDispatcher _dispatcher;
+
         [ImportingConstructor]
-        public StarMessenger(IImageHistoryVM imageHistory,
-                             IImageDataFactory imageDataFactory,
-                             IProfileService profileService)
+        public StarMessenger(IImageDataFactory imageDataFactory,
+                             IProfileService profileService,
+                             IImageSaveMediator imageSaveMediator,
+                             ISequenceMediator sequenceMediator)
         {
             try
             {
@@ -49,40 +58,72 @@ namespace NINA.StarMessenger
                 }
 
                 SendPushoverTestMessageCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() =>
-                {
-                    const int timeoutSendStarMessagePushoverInMilliSeconds = 30000;
-                    using var cancellationTokenSource = new CancellationTokenSource();
-                    cancellationTokenSource.CancelAfter(timeoutSendStarMessagePushoverInMilliSeconds);
-
-                    var pushoverClient = new PushoverClient();
-                    _ = pushoverClient.SendMessageAsync(SoundTypes.Pushover.ToString().ToLower(), "0", TriggerSourceTypes.Default, cancellationTokenSource.Token, true);
-
-                });
+                    _ = SendTestMessageAsync(new PushoverClient(SoundTypes.Pushover.ToString().ToLower(), "0")));
 
                 SendTestEMailCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() =>
-                {
-                    var eMailClient = new EMailClient();
-                    _ = eMailClient.SendEMailAsync(TriggerSourceTypes.Default, true);
-
-                });
+                    _ = SendTestMessageAsync(new EMailClient()));
 
                 SendNtfyTestMessageCommand = new CommunityToolkit.Mvvm.Input.RelayCommand(() =>
-                {
-                    var ntfyClient = new NtfyClient();
-                    _ = ntfyClient.SendNtfyMessageAsync(NtfyPrioritization.GetValueByEnum(PriorityTypes.Normal), TriggerSourceTypes.Default, true);
+                    _ = SendTestMessageAsync(new NtfyClient(NtfyPrioritization.GetValueByEnum(PriorityTypes.Normal))));
 
-                });
+                DataProvider.Configure();
 
-                DataProvider.Configure(imageHistory, imageDataFactory, profileService);
-            }
-            catch (TaskCanceledException)
-            {
-                Logger.Error($"Error during instantiation of StarMessenger plugin");
+                _dispatcher = new StarMessageDispatcher(new PreviewImageRenderer(imageDataFactory, profileService),
+                                                        () => !sequenceMediator.Initialized || sequenceMediator.IsAdvancedSequenceRunning(),
+                                                        Notification.ShowError);
+                StarMessageDispatcher.Default = _dispatcher;
+
+                _imageSaveMediator = imageSaveMediator;
+                _imageSaveMediator.ImageSaved += ImageSaved;
             }
             catch (Exception e)
             {
                 Logger.Error($"Error during instantiation of StarMessenger plugin", e, nameof(StarMessenger));
                 throw;
+            }
+        }
+
+        public override Task Teardown()
+        {
+            _imageSaveMediator.ImageSaved -= ImageSaved;
+            if (StarMessageDispatcher.Default == _dispatcher)
+            {
+                StarMessageDispatcher.Default = null;
+            }
+            _dispatcher.Dispose();
+            return base.Teardown();
+        }
+
+        private void ImageSaved(object? sender, ImageSavedEventArgs e)
+        {
+            try
+            {
+                if (e.MetaData?.Image?.ImageType == StarMessageTriggerHelper.LightImageType)
+                {
+                    _dispatcher.OnImageSaved(ImageSnapshotFactory.Create(e));
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Error while processing the saved image in StarMessenger: {ex.Message}", ex);
+            }
+        }
+
+        private static async Task SendTestMessageAsync(IStarMessageChannel channel)
+        {
+            const int timeoutSendTestMessageInMilliSeconds = 30000;
+            using var cancellationTokenSource = new CancellationTokenSource(timeoutSendTestMessageInMilliSeconds);
+            try
+            {
+                if (!await channel.SendAsync(TestMessage, null, cancellationTokenSource.Token))
+                {
+                    Notification.ShowError($"StarMessenger: Test message via {channel.Name} could not be sent. See log for details.");
+                }
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Error while sending a test message via {channel.Name}", e);
+                Notification.ShowError($"StarMessenger: Test message via {channel.Name} could not be sent: {e.Message}");
             }
         }
 

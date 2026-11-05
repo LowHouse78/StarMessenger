@@ -9,20 +9,12 @@
 
 #endregion "copyright"
 
-using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition;
 using Newtonsoft.Json;
-using NINA.Core.Model;
-using NINA.Profile.Interfaces;
-using NINA.Sequencer.Container;
-using NINA.Sequencer.Interfaces;
-using NINA.Sequencer.SequenceItem;
 using NINA.Sequencer.Trigger;
-using NINA.Sequencer.Validations;
 using NINA.StarMessenger.Communication.Pushover;
-using NINA.StarMessenger.SequenceItems.Pushover;
-using NINA.WPF.Base.Interfaces.Mediator;
+using NINA.StarMessenger.Processing;
 using NINA.WPF.Base.Interfaces.ViewModel;
 
 namespace NINA.StarMessenger.Communication.Trigger.Pushover
@@ -33,59 +25,33 @@ namespace NINA.StarMessenger.Communication.Trigger.Pushover
     [ExportMetadata("Category", "StarMessenger")]
     [Export(typeof(ISequenceTrigger))]
     [JsonObject(MemberSerialization.OptIn)]
-    public class SendStarMessageToPushoverAfterExposuresTrigger : SequenceTrigger, IValidatable
+    public class SendStarMessageToPushoverAfterExposuresTrigger : StarMessageAfterExposuresTriggerBase
     {
-        private IImageHistoryVM _history;
-        private IProfileService _profileService;
-        private IApplicationStatusMediator _applicationStatusMediator;
-        private readonly PushoverClient _pushoverClient;
-        private int _lastTriggerId;
-        private int _afterExposures;
         private string? _notificationSound;
         private string? _priority;
-        private int _progressExposures;
         private ObservableCollection<string>? _soundTypes;
         private ObservableCollection<string>? _priorityTypes;
-        private IList<string> _issues = new List<string>();
-        private StarMessageToPushover _starMessageToPushover;
-
 
         [ImportingConstructor]
-        public SendStarMessageToPushoverAfterExposuresTrigger(IImageHistoryVM history,
-                                      IProfileService profileService,
-                                      IApplicationStatusMediator applicationStatusMediator)
+        public SendStarMessageToPushoverAfterExposuresTrigger(IImageHistoryVM history) : base(history)
         {
-            _history = history;
-            _profileService = profileService;
-            _applicationStatusMediator = applicationStatusMediator;
-            AfterExposures = 1;
             _soundTypes = new ObservableCollection<string>(Enum.GetNames(typeof(SoundTypes)).ToList());
             _priorityTypes = new ObservableCollection<string>(Enum.GetNames(typeof(PriorityTypes)).ToList());
-            _pushoverClient = new PushoverClient();
-
-            _starMessageToPushover = new StarMessageToPushover(applicationStatusMediator);
-            TriggerRunner.Add(_starMessageToPushover);
         }
 
-  
+        private SendStarMessageToPushoverAfterExposuresTrigger(SendStarMessageToPushoverAfterExposuresTrigger deepCopy) : this(deepCopy.History)
+        {
+            CopyMetaData(deepCopy);
+        }
+
         public override object Clone()
         {
             return new SendStarMessageToPushoverAfterExposuresTrigger(this)
             {
                 AfterExposures = AfterExposures,
-                TriggerRunner = (SequentialContainer)TriggerRunner.Clone()
+                NotificationSound = NotificationSound,
+                Priority = Priority
             };
-        }
-
-        [JsonProperty]
-        public int AfterExposures
-        {
-            get => _afterExposures;
-            set
-            {
-                _afterExposures = value;
-                RaisePropertyChanged();
-            }
         }
 
         [JsonProperty]
@@ -132,79 +98,9 @@ namespace NINA.StarMessenger.Communication.Trigger.Pushover
             }
         }
 
-
-        [JsonIgnore]
-        public int ProgressExposures => AfterExposures > 0 ? _history.ImageHistory.Where(s => s.Type == "LIGHT").ToList().Count % AfterExposures : 0;
-
-        [JsonIgnore]
-        public IList<string> Issues
+        internal override IStarMessageChannel CreateChannel()
         {
-            get => _issues;
-            set
-            {
-                _issues = ImmutableList.CreateRange(value);
-                RaisePropertyChanged();
-            }
-        }
-
-        public override async Task Execute(ISequenceContainer context, IProgress<ApplicationStatus> progress, CancellationToken token)
-        {
-            if (AfterExposures > 0)
-            {
-                _lastTriggerId = _history.ImageHistory.Where(s => s.Type == "LIGHT").ToList().Count;
-                
-                foreach (var triggerRunner in TriggerRunner.Items)
-                {
-                    if (triggerRunner.GetType() == typeof(StarMessageToPushover))
-                    {
-                        ((StarMessageToPushover)triggerRunner).TriggerSource = TriggerSourceTypes.ByExposures;
-                        ((StarMessageToPushover)triggerRunner).NotificationSound = NotificationSound;
-                        ((StarMessageToPushover)triggerRunner).Priority = Priority;
-                    }
-                }
-                await TriggerRunner.Run(progress, token);
-            }
-        }
-
-        public override void AfterParentChanged()
-        {
-            Validate();
-        }
-
-        public override bool ShouldTrigger(ISequenceItem previousItem, ISequenceItem nextItem)
-        {
-            if (nextItem is not IExposureItem { ImageType: "LIGHT" })
-            {
-                return false;
-            }
-
-            RaisePropertyChanged(nameof(ProgressExposures));
-            if (_lastTriggerId > _history.ImageHistory.Where(s => s.Type == "LIGHT").ToList().Count)
-            {
-                _lastTriggerId = 0;
-            }
-            return _lastTriggerId < _history.ImageHistory.Where(s => s.Type == "LIGHT").ToList().Count && _history.ImageHistory.Where(s => s.Type == "LIGHT").ToList().Count > 0 && ProgressExposures == 0;
-        }
-
-        public override string ToString()
-        {
-            return $"Trigger: {nameof(SendStarMessageToPushoverAfterExposuresTrigger)}, After Exposures: {AfterExposures}";
-        }
-
-        public bool Validate()
-        {
-            Issues = new List<string>();
-            if (!int.TryParse(AfterExposures.ToString(), out var _))
-            {
-                Issues.Add("Value is not a valid integer.");
-            }
-
-            return !Issues.Any();
-        }
-
-        private SendStarMessageToPushoverAfterExposuresTrigger(SendStarMessageToPushoverAfterExposuresTrigger deepCopy) : this(deepCopy._history, deepCopy._profileService, deepCopy._applicationStatusMediator)
-        {
-            CopyMetaData(deepCopy);
+            return PushoverClient.Create(NotificationSound, Priority);
         }
     }
 }

@@ -14,7 +14,16 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     <DataTemplate DataType="{x:Type Email:StarMessageToEMail}">
         <nina:SequenceBlockView>
-
+            <nina:SequenceBlockView.SequenceItemContent>
+                <StackPanel Orientation="Horizontal">
+                    <CheckBox
+                    Margin="5,3,0,3"
+                    VerticalAlignment="Center"
+                    Content="Wait for delivery"
+                    ToolTip="If checked, the sequence waits until the StarMessage has been sent. Otherwise it continues immediately."
+                    IsChecked="{Binding WaitForDelivery, Mode=TwoWay}" />
+                </StackPanel>
+            </nina:SequenceBlockView.SequenceItemContent>
         </nina:SequenceBlockView>
     </DataTemplate>
 

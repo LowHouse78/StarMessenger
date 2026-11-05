@@ -26,7 +26,7 @@
   <ItemGroup>
     <Compile Include="$(SolutionDir)\AssemblyInfo.cs"
              Link="Properties\AssemblyInfo.cs"
-             Condition="$(MSBuildProjectName) != 'DependencyValidation' "/>
+             Condition="$(MSBuildProjectName) != 'DependencyValidation' And !$(MSBuildProjectName.EndsWith('.Tests'))"/>
   </ItemGroup>
 
 </Project>
